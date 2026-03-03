@@ -36,6 +36,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 app.use(cors());
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
+app.use(express.static(__dirname));
 
 // ─── HEALTH ──────────────────────────────────────────────────────────────────
 app.get('/health', (_, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
