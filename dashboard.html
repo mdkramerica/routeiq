@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Dashboard — RouteIQ</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a28;
+      --border: #2a2a3f;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --text: #e8e8f0;
+      --muted: #7a7a9a;
+      --green: #22c55e;
+      --gold: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: rgba(10,10,15,0.97);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .topbar-logo {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+    .topbar-logo span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .topbar-logo .iq { -webkit-text-fill-color: var(--text); }
+    .topbar-date { font-size: 0.75rem; color: var(--muted); }
+
+    /* ── BOTTOM TAB BAR ── */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      background: rgba(10,10,15,0.97);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.55rem 0 0.4rem;
+      color: var(--muted);
+      font-size: 0.65rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab.active { color: var(--accent); }
+    .tab svg { width: 22px; height: 22px; margin-bottom: 2px; }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      padding: 1rem 1rem 5rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── SHARED ── */
+    .page-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .page-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-sm {
+      padding: 0.4rem 0.7rem;
+      font-size: 0.75rem;
+    }
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+    }
+    .btn-full {
+      width: 100%;
+      padding: 0.85rem;
+      font-size: 0.95rem;
+      border-radius: 10px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .empty-state p { font-size: 0.9rem; margin-bottom: 1rem; }
+    .badge-priority {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-high { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-med { background: rgba(245,158,11,0.15); color: var(--gold); }
+    .badge-low { background: rgba(122,122,154,0.15); color: var(--muted); }
+    .toast {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.65rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TODAY TAB ── */
+    .stop-card { position: relative; }
+    .stop-header {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    .stop-num {
+      background: var(--accent);
+      color: #fff;
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .stop-name { font-weight: 700; font-size: 0.9rem; }
+    .stop-meta { font-size: 0.72rem; color: var(--muted); }
+    .stop-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.6rem;
+    }
+    .brief-box {
+      background: rgba(108,99,255,0.08);
+      border-left: 3px solid var(--accent);
+      padding: 0.6rem 0.8rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      margin-top: 0.6rem;
+      display: none;
+    }
+    .brief-tag {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--accent2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.2rem;
+    }
+
+    /* ── ACCOUNTS TAB ── */
+    .search-bar {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      margin-bottom: 0.75rem;
+    }
+    .search-bar:focus { border-color: var(--accent); }
+    .search-bar::placeholder { color: var(--muted); }
+    .account-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+    }
+    .account-item:not(:last-child) { border-bottom: 1px solid var(--border); }
+    .account-name { font-weight: 600; font-size: 0.88rem; }
+    .account-sub { font-size: 0.72rem; color: var(--muted); }
+    .fab {
+      position: fixed;
+      bottom: 80px;
+      right: 1rem;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff;
+      font-size: 1.6rem;
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+      z-index: 90;
+    }
+    .detail-view {
+      display: none;
+    }
+    .detail-back {
+      background: none;
+      border: none;
+      color: var(--accent2);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+      padding: 0;
+    }
+    .detail-header { margin-bottom: 1rem; }
+    .detail-header h2 { font-size: 1.1rem; font-weight: 800; }
+    .detail-meta { font-size: 0.78rem; color: var(--muted); }
+    .log-entry {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-date { font-size: 0.7rem; color: var(--muted); }
+    .log-summary { font-size: 0.82rem; margin-top: 0.15rem; }
+    .log-outcome {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-top: 0.2rem;
+    }
+
+    /* ── ADD ACCOUNT FORM ── */
+    .add-form {
+      display: none;
+    }
+    .add-form .form-group { margin-bottom: 0.75rem; }
+    .add-form label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .add-form input, .add-form select, .add-form textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .add-form textarea { resize: vertical; min-height: 60px; }
+    .add-form input:focus, .add-form select:focus, .add-form textarea:focus { border-color: var(--accent); }
+
+    /* ── PLAN TAB ── */
+    .plan-date-picker {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      margin-bottom: 0.75rem;
+      font-family: inherit;
+      color-scheme: dark;
+    }
+    .plan-date-picker:focus { border-color: var(--accent); }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .checklist-item input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+    .checklist-item.overdue { color: var(--gold); }
+    .checklist-item .overdue-tag {
+      font-size: 0.62rem;
+      background: rgba(245,158,11,0.15);
+      color: var(--gold);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: 0.3rem;
+    }
+    .plan-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .plan-actions .btn { flex: 1; min-width: 0; }
+
+    /* ── PROFILE TAB ── */
+    .profile-card {
+      text-align: center;
+      padding: 1.5rem 1rem;
+    }
+    .profile-avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 800; color: #fff;
+      margin: 0 auto 0.75rem;
+    }
+    .profile-email { font-size: 0.9rem; font-weight: 600; }
+    .profile-plan {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+    .profile-plan span {
+      display: inline-block;
+      background: rgba(108,99,255,0.15);
+      color: var(--accent2);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.7rem;
+    }
+    .profile-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-top: 1.25rem;
+    }
+
+    /* ── VOICE RECORDER MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.75rem 1.5rem;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .modal p { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
+    .rec-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--red);
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .rec-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .rec-time { font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem; }
+    .modal-actions { display: flex; gap: 0.5rem; }
+    .modal-actions .btn { flex: 1; }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 640px) {
+      .main { padding: 1.25rem 1.5rem 5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo"><span>Route</span><span class="iq">IQ</span></div>
+  <div class="topbar-date" id="topbar-date"></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- ═══ TODAY TAB ═══ -->
+  <div class="tab-content active" id="tab-today">
+    <h1 class="page-title">Today's Route</h1>
+    <p class="page-sub" id="today-sub">Loading...</p>
+    <div id="today-stops"></div>
+    <button class="btn btn-green btn-full" id="start-route-btn" style="display:none; margin-top:0.75rem;">
+      Open in Google Maps
+    </button>
+  </div>
+
+  <!-- ═══ ACCOUNTS TAB ═══ -->
+  <div class="tab-content" id="tab-accounts">
+    <h1 class="page-title">Accounts</h1>
+    <input type="text" class="search-bar" id="account-search" placeholder="Search accounts..." />
+
+    <div id="accounts-list-view">
+      <div class="card" id="accounts-list" style="padding:0; overflow:hidden;"></div>
+    </div>
+
+    <div class="detail-view" id="account-detail">
+      <button class="detail-back" id="detail-back">&larr; All Accounts</button>
+      <div class="detail-header">
+        <h2 id="detail-name"></h2>
+        <div class="detail-meta" id="detail-meta"></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:0.85rem; font-weight:700; margin-bottom:0.5rem;">Call Log History</h3>
+        <div id="detail-logs"></div>
+      </div>
+    </div>
+
+    <div class="add-form card" id="add-form">
+      <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:0.75rem;">Add Account</h3>
+      <form id="add-account-form">
+        <div class="form-group">
+          <label>Account Name *</label>
+          <input type="text" id="add-name" required />
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" id="add-address" />
+        </div>
+        <div class="form-group">
+          <label>Contact Name</label>
+          <input type="text" id="add-contact" />
+        </div>
+        <div class="form-group">
+          <label>Contact Email</label>
+          <input type="email" id="add-email" />
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="add-priority">
+            <option value="1">High</option>
+            <option value="2" selected>Medium</option>
+            <option value="3">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="add-notes"></textarea>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button type="button" class="btn btn-outline" style="flex:1;" onclick="toggleAddForm()">Cancel</button>
+          <button type="submit" class="btn btn-accent" style="flex:1;">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ PLAN TAB ═══ -->
+  <div class="tab-content" id="tab-plan">
+    <h1 class="page-title">Plan Route</h1>
+    <p class="page-sub">Select accounts and optimize your route.</p>
+    <input type="date" class="plan-date-picker" id="plan-date" />
+    <div class="card" id="plan-checklist" style="padding:0.5rem 1rem;"></div>
+    <div class="plan-actions">
+      <button class="btn btn-accent" id="plan-optimize-btn">Optimize</button>
+      <button class="btn btn-outline" id="plan-briefs-btn">Briefs</button>
+      <button class="btn btn-green" id="plan-save-btn">Save Plan</button>
+    </div>
+  </div>
+
+  <!-- ═══ PROFILE TAB ═══ -->
+  <div class="tab-content" id="tab-profile">
+    <div class="card profile-card">
+      <div class="profile-avatar" id="profile-avatar"></div>
+      <div class="profile-email" id="profile-email"></div>
+      <div class="profile-plan">Plan: <span id="profile-plan">free</span></div>
+      <div class="profile-actions">
+        <button class="btn btn-accent btn-full" id="upgrade-btn">Upgrade Plan</button>
+        <button class="btn btn-outline btn-full" id="logout-btn">Log Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB for Accounts tab -->
+<button class="fab" id="fab-add" onclick="toggleAddForm()">+</button>
+
+<!-- VOICE RECORDER MODAL -->
+<div class="modal-overlay" id="voice-modal">
+  <div class="modal">
+    <h3 id="voice-modal-title">Voice Log</h3>
+    <p id="voice-modal-sub">Tap to start recording your call notes.</p>
+    <div class="rec-indicator" id="rec-indicator" style="display:none;">
+      <div class="rec-dot"></div> Recording
+    </div>
+    <div class="rec-time" id="rec-time" style="display:none;">0:00</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="voice-cancel">Cancel</button>
+      <button class="btn btn-accent" id="voice-action">Start Recording</button>
+    </div>
+    <div id="voice-result" style="margin-top:1rem; display:none; text-align:left;">
+      <div style="font-size:0.72rem; font-weight:600; color:var(--accent2); text-transform:uppercase; margin-bottom:0.2rem;">Transcript</div>
+      <div id="voice-transcript" style="font-size:0.82rem; margin-bottom:0.5rem;"></div>
+      <div style="font-size:0.72rem; font-weight:600; color:var(--green); text-transform:uppercase; margin-bottom:0.2rem;">Summary</div>
+      <div id="voice-summary" style="font-size:0.82rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- BOTTOM TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" data-tab="today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Today
+  </button>
+  <button class="tab" data-tab="accounts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Accounts
+  </button>
+  <button class="tab" data-tab="plan">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Plan
+  </button>
+  <button class="tab" data-tab="profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTH & API HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+const API = window.location.origin;
+const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+if (!token || !user) {
+  window.location.href = 'login.html';
+}
+
+function authHeaders() {
+  return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opts,
+    headers: { ...authHeaders(), ...(opts.headers || {}) }
+  });
+  if (res.status === 401) {
+    localStorage.clear();
+    window.location.href = 'login.html';
+    return;
+  }
+  return res;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+function formatDate(d) {
+  if (!d) return 'Never';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function priorityBadge(p) {
+  const map = { 1: ['High', 'badge-high'], 2: ['Med', 'badge-med'], 3: ['Low', 'badge-low'] };
+  const [label, cls] = map[p] || map[2];
+  return `<span class="badge-priority ${cls}">${label}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════════════════════════════════════════
+const tabs = document.querySelectorAll('.tab');
+const tabContents = document.querySelectorAll('.tab-content');
+const fab = document.getElementById('fab-add');
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.tab;
+    tabs.forEach(t => t.classList.remove('active'));
+    tabContents.forEach(tc => tc.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`tab-${target}`).classList.add('active');
+    fab.style.display = target === 'accounts' ? 'flex' : 'none';
+    // Hide detail view when switching tabs
+    if (target === 'accounts') {
+      document.getElementById('accounts-list-view').style.display = 'block';
+      document.getElementById('account-detail').style.display = 'none';
+      document.getElementById('add-form').style.display = 'none';
+    }
+  });
+});
+
+// Set topbar date
+document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', {
+  weekday: 'short', month: 'short', day: 'numeric'
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TODAY TAB
+// ══════════════════════════════════════════════════════════════════════════════
+let todayStops = [];
+
+async function loadToday() {
+  const container = document.getElementById('today-stops');
+  try {
+    const res = await apiFetch('/api/route/today');
+    const data = await res.json();
+    todayStops = data.stops || [];
+
+    if (!todayStops.length) {
+      container.innerHTML = `<div class="empty-state"><p>No route planned for today.</p><button class="btn btn-accent" onclick="switchTab('plan')">Plan a Route</button></div>`;
+      document.getElementById('start-route-btn').style.display = 'none';
+      document.getElementById('today-sub').textContent = 'No stops scheduled';
+      return;
+    }
+
+    document.getElementById('today-sub').textContent = `${todayStops.length} stops`;
+    document.getElementById('start-route-btn').style.display = 'block';
+    container.innerHTML = todayStops.map((s, i) => `
+      <div class="card stop-card" data-id="${s.id}">
+        <div class="stop-header">
+          <div class="stop-num">${i + 1}</div>
+          <div>
+            <div class="stop-name">${esc(s.name)}</div>
+            <div class="stop-meta">${s.contact_name ? esc(s.contact_name) + ' · ' : ''}Last visit: ${formatDate(s.last_visited)}</div>
+          </div>
+        </div>
+        <div class="stop-actions">
+          <button class="btn btn-green btn-sm" onclick="markVisited('${s.id}', this)">Mark Visited</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleBrief('${s.id}', this)">Brief</button>
+          <button class="btn btn-outline btn-sm" onclick="openVoiceLog('${s.id}', '${esc(s.name)}')">Voice Log</button>
+        </div>
+        <div class="brief-box" id="brief-${s.id}"></div>
+      </div>
+    `).join('');
+  } catch {
+    container.innerHTML = '<div class="empty-state"><p>Could not load today\'s route.</p></div>';
+    document.getElementById('today-sub').textContent = '';
+  }
+}
+
+async function markVisited(accountId, btn) {
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  await apiFetch(`/api/accounts/${accountId}/visit`, { method: 'POST' });
+  btn.textContent = 'Visited';
+  btn.classList.remove('btn-green');
+  btn.classList.add('btn-outline');
+  btn.style.opacity = '0.6';
+  toast('Visit logged');
+}
+
+async function toggleBrief(accountId, btn) {
+  const box = document.getElementById(`brief-${accountId}`);
+  if (box.style.display === 'block') {
+    box.style.display = 'none';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res = await apiFetch('/api/brief/generate', {
+      method: 'POST',
+      body: JSON.stringify({ accountId })
+    });
+    const data = await res.json();
+    box.innerHTML = `<div class="brief-tag">AI Walk-in Brief</div>${esc(data.brief)}`;
+    box.style.display = 'block';
+  } catch {
+    toast('Could not generate brief');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Brief';
+}
+
+document.getElementById('start-route-btn').addEventListener('click', () => {
+  if (!todayStops.length) return;
+  const waypoints = todayStops.filter(s => s.lat && s.lng);
+  if (!waypoints.length) { toast('No geocoded stops'); return; }
+  const origin = `${waypoints[0].lat},${waypoints[0].lng}`;
+  const dest = `${waypoints[waypoints.length - 1].lat},${waypoints[waypoints.length - 1].lng}`;
+  const mid = waypoints.slice(1, -1).map(s => `${s.lat},${s.lng}`).join('|');
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`;
+  if (mid) url += `&waypoints=${mid}`;
+  window.open(url, '_blank');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ACCOUNTS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+let allAccounts = [];
+
+async function loadAccounts() {
+  try {
+    const res = await apiFetch('/api/accounts');
+    allAccounts = await res.json();
+    renderAccountsList(allAccounts);
+  } catch {
+    document.getElementById('accounts-list').innerHTML = '<div class="empty-state"><p>Could not load accounts.</p></div>';
+  }
+}
+
+function renderAccountsList(accounts) {
+  const list = document.getElementById('accounts-list');
+  if (!accounts.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;"><p>No accounts yet. Tap + to add one.</p></div>';
+    return;
+  }
+  list.innerHTML = accounts.map(a => `
+    <div class="account-item" onclick="showAccountDetail('${a.id}')">
+      <div>
+        <div class="account-name">${esc(a.name)} ${priorityBadge(a.priority)}</div>
+        <div class="account-sub">${a.contact_name ? esc(a.contact_name) + ' · ' : ''}Last visit: ${formatDate(a.last_visited)}</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  `).join('');
+}
+
+document.getElementById('account-search').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  renderAccountsList(allAccounts.filter(a =>
+    a.name.toLowerCase().includes(q) || (a.contact_name || '').toLowerCase().includes(q)
+  ));
+});
+
+async function showAccountDetail(id) {
+  const account = allAccounts.find(a => a.id === id);
+  if (!account) return;
+  document.getElementById('accounts-list-view').style.display = 'none';
+  document.getElementById('add-form').style.display = 'none';
+  fab.style.display = 'none';
+  const detail = document.getElementById('account-detail');
+  detail.style.display = 'block';
+
+  document.getElementById('detail-name').textContent = account.name;
+  document.getElementById('detail-meta').innerHTML = `
+    ${account.contact_name || 'No contact'} · ${account.address || 'No address'}<br/>
+    Priority: ${priorityBadge(account.priority)} · Last visited: ${formatDate(account.last_visited)}
+    ${account.notes ? '<br/>Notes: ' + esc(account.notes) : ''}
+  `;
+
+  // Load call logs
+  const logsDiv = document.getElementById('detail-logs');
+  logsDiv.innerHTML = '<div style="color:var(--muted); font-size:0.82rem;">Loading logs...</div>';
+  try {
+    const res = await apiFetch(`/api/accounts/${id}/logs`);
+    const logs = await res.json();
+    if (!logs.length) {
+      logsDiv.innerHTML = '<div style="color:var(--muted); font-size:0.82rem;">No call logs yet.</div>';
+      return;
+    }
+    logsDiv.innerHTML = logs.map(l => `
+      <div class="log-entry">
+        <div class="log-date">${new Date(l.created_at).toLocaleString()}</div>
+        <div class="log-summary">${esc(l.summary || l.transcript || '')}</div>
+        ${l.outcome ? `<span class="log-outcome" style="background:rgba(108,99,255,0.12); color:var(--accent2);">${esc(l.outcome)}</span>` : ''}
+      </div>
+    `).join('');
+  } catch {
+    logsDiv.innerHTML = '<div style="color:var(--muted); font-size:0.82rem;">Could not load logs.</div>';
+  }
+}
+
+document.getElementById('detail-back').addEventListener('click', () => {
+  document.getElementById('account-detail').style.display = 'none';
+  document.getElementById('accounts-list-view').style.display = 'block';
+  fab.style.display = 'flex';
+});
+
+function toggleAddForm() {
+  const form = document.getElementById('add-form');
+  if (form.style.display === 'block') {
+    form.style.display = 'none';
+    fab.style.display = 'flex';
+  } else {
+    form.style.display = 'block';
+    fab.style.display = 'none';
+    document.getElementById('accounts-list-view').style.display = 'none';
+    document.getElementById('account-detail').style.display = 'none';
+  }
+}
+
+document.getElementById('add-account-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const res = await apiFetch('/api/accounts', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('add-name').value,
+        address: document.getElementById('add-address').value,
+        contact_name: document.getElementById('add-contact').value,
+        contact_email: document.getElementById('add-email').value,
+        priority: parseInt(document.getElementById('add-priority').value),
+        notes: document.getElementById('add-notes').value
+      })
+    });
+    if (!res.ok) throw new Error('Failed to add account');
+    toast('Account added');
+    document.getElementById('add-account-form').reset();
+    toggleAddForm();
+    document.getElementById('accounts-list-view').style.display = 'block';
+    loadAccounts();
+  } catch {
+    toast('Error adding account');
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLAN TAB
+// ══════════════════════════════════════════════════════════════════════════════
+const planDate = document.getElementById('plan-date');
+planDate.value = new Date().toISOString().split('T')[0];
+
+async function loadPlanAccounts() {
+  const container = document.getElementById('plan-checklist');
+  if (!allAccounts.length) await loadAccounts();
+
+  const today = new Date();
+  container.innerHTML = allAccounts.map(a => {
+    let overdue = false;
+    if (a.last_visited && a.visit_frequency_days) {
+      const lastVisit = new Date(a.last_visited);
+      const due = new Date(lastVisit);
+      due.setDate(due.getDate() + a.visit_frequency_days);
+      overdue = due <= today;
+    } else if (!a.last_visited) {
+      overdue = true;
+    }
+    return `
+      <label class="checklist-item ${overdue ? 'overdue' : ''}">
+        <input type="checkbox" value="${a.id}" ${overdue ? 'checked' : ''} />
+        <span>
+          ${esc(a.name)} ${priorityBadge(a.priority)}
+          ${overdue ? '<span class="overdue-tag">Overdue</span>' : ''}
+        </span>
+      </label>
+    `;
+  }).join('');
+}
+
+function getSelectedAccountIds() {
+  return [...document.querySelectorAll('#plan-checklist input[type="checkbox"]:checked')]
+    .map(cb => cb.value);
+}
+
+document.getElementById('plan-optimize-btn').addEventListener('click', async () => {
+  const ids = getSelectedAccountIds();
+  if (!ids.length) { toast('Select at least one account'); return; }
+  const btn = document.getElementById('plan-optimize-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Optimizing';
+  try {
+    let startLat = 0, startLng = 0;
+    if (navigator.geolocation) {
+      try {
+        const pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+        );
+        startLat = pos.coords.latitude;
+        startLng = pos.coords.longitude;
+      } catch {}
+    }
+    const res = await apiFetch('/api/route/optimize', {
+      method: 'POST',
+      body: JSON.stringify({ accountIds: ids, startLat, startLng })
+    });
+    const data = await res.json();
+    toast(`Route optimized: ${data.stops} stops, ${data.totalMiles} mi`);
+  } catch {
+    toast('Optimization failed');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Optimize';
+});
+
+document.getElementById('plan-briefs-btn').addEventListener('click', async () => {
+  const ids = getSelectedAccountIds();
+  if (!ids.length) { toast('Select at least one account'); return; }
+  const btn = document.getElementById('plan-briefs-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  for (const id of ids) {
+    try {
+      await apiFetch('/api/brief/generate', {
+        method: 'POST',
+        body: JSON.stringify({ accountId: id })
+      });
+    } catch {}
+  }
+  toast(`Generated ${ids.length} briefs`);
+  btn.disabled = false;
+  btn.textContent = 'Briefs';
+});
+
+document.getElementById('plan-save-btn').addEventListener('click', async () => {
+  const ids = getSelectedAccountIds();
+  if (!ids.length) { toast('Select at least one account'); return; }
+  const btn = document.getElementById('plan-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    await apiFetch('/api/route/plan', {
+      method: 'POST',
+      body: JSON.stringify({
+        plan_date: planDate.value,
+        account_ids: ids
+      })
+    });
+    toast('Route plan saved');
+  } catch {
+    toast('Failed to save plan');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save Plan';
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PROFILE TAB
+// ══════════════════════════════════════════════════════════════════════════════
+function loadProfile() {
+  if (!user) return;
+  document.getElementById('profile-email').textContent = user.email || '';
+  document.getElementById('profile-plan').textContent = user.plan || 'free';
+  document.getElementById('profile-avatar').textContent = (user.email || '?')[0].toUpperCase();
+}
+
+document.getElementById('upgrade-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('upgrade-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Redirecting...';
+  try {
+    const res = await apiFetch('/api/stripe/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ plan: 'solo', email: user.email })
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else toast('Could not start checkout');
+  } catch {
+    toast('Checkout failed');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Upgrade Plan';
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch {}
+  localStorage.clear();
+  window.location.href = 'login.html';
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VOICE RECORDER
+// ══════════════════════════════════════════════════════════════════════════════
+let mediaRecorder = null;
+let audioChunks = [];
+let recInterval = null;
+let recStartTime = 0;
+let voiceAccountId = null;
+
+function openVoiceLog(accountId, accountName) {
+  voiceAccountId = accountId;
+  document.getElementById('voice-modal-title').textContent = `Voice Log — ${accountName}`;
+  document.getElementById('voice-modal').classList.add('show');
+  document.getElementById('voice-result').style.display = 'none';
+  document.getElementById('rec-indicator').style.display = 'none';
+  document.getElementById('rec-time').style.display = 'none';
+  document.getElementById('voice-action').textContent = 'Start Recording';
+  document.getElementById('voice-modal-sub').textContent = 'Tap to start recording your call notes.';
+}
+
+document.getElementById('voice-cancel').addEventListener('click', () => {
+  stopRecording(false);
+  document.getElementById('voice-modal').classList.remove('show');
+});
+
+document.getElementById('voice-action').addEventListener('click', async () => {
+  const actionBtn = document.getElementById('voice-action');
+  if (actionBtn.textContent === 'Start Recording') {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+      mediaRecorder.start();
+      recStartTime = Date.now();
+      document.getElementById('rec-indicator').style.display = 'inline-flex';
+      document.getElementById('rec-time').style.display = 'block';
+      document.getElementById('voice-modal-sub').textContent = 'Recording...';
+      actionBtn.textContent = 'Stop & Submit';
+      actionBtn.classList.remove('btn-accent');
+      actionBtn.classList.add('btn-green');
+      recInterval = setInterval(() => {
+        const secs = Math.floor((Date.now() - recStartTime) / 1000);
+        document.getElementById('rec-time').textContent = `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
+      }, 250);
+    } catch {
+      toast('Microphone access denied');
+    }
+  } else if (actionBtn.textContent === 'Stop & Submit') {
+    actionBtn.disabled = true;
+    actionBtn.innerHTML = '<span class="spinner"></span> Processing';
+    stopRecording(true);
+  }
+});
+
+function stopRecording(submit) {
+  if (recInterval) { clearInterval(recInterval); recInterval = null; }
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.onstop = async () => {
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      if (submit) {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', blob, 'recording.webm');
+        formData.append('accountId', voiceAccountId);
+        try {
+          const res = await fetch(`${API}/api/log/voice`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+          });
+          const data = await res.json();
+          document.getElementById('voice-transcript').textContent = data.transcript || '';
+          document.getElementById('voice-summary').textContent = data.summary || '';
+          document.getElementById('voice-result').style.display = 'block';
+          document.getElementById('voice-modal-sub').textContent = 'Logged successfully!';
+        } catch {
+          toast('Voice log failed');
+        }
+        const actionBtn = document.getElementById('voice-action');
+        actionBtn.disabled = false;
+        actionBtn.textContent = 'Done';
+        actionBtn.classList.remove('btn-green');
+        actionBtn.classList.add('btn-accent');
+        actionBtn.onclick = () => document.getElementById('voice-modal').classList.remove('show');
+      }
+    };
+    mediaRecorder.stop();
+  }
+  document.getElementById('rec-indicator').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelector(`.tab[data-tab="${name}"]`).click();
+}
+
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+loadToday();
+loadAccounts();
+loadPlanAccounts();
+loadProfile();
+</script>
+</body>
+</html>
