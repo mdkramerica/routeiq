@@ -50,8 +50,16 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-        setAuth(data.session, data.user);
-        window.location.href = 'dashboard.html';
+        if (data.session) {
+          setAuth(data.session, data.user);
+          window.location.href = 'dashboard.html';
+        } else {
+          // Email confirmation required — show success message
+          showSuccess('Account created! Check your email to confirm, then log in.');
+          btn.disabled = false;
+          btn.textContent = 'Create Free Account';
+        }
+        return;
       } catch (err) {
         showError(err.message);
         btn.disabled = false;

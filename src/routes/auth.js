@@ -34,10 +34,19 @@ router.post(
       );
     }
 
-    res.json({
-      user: { id: data.user.id, email: data.user.email, plan: 'free' },
-      session: data.session,
-    });
+    // If email confirmation is enabled, session will be null
+    if (data.session) {
+      res.json({
+        user: { id: data.user.id, email: data.user.email, plan: 'free' },
+        session: data.session,
+      });
+    } else {
+      res.json({
+        user: { id: data.user.id, email: data.user.email, plan: 'free' },
+        session: null,
+        confirmEmail: true,
+      });
+    }
   })
 );
 
