@@ -36,6 +36,15 @@ const magicLinkSchema = Joi.object({
   email: Joi.string().email().required().max(255),
 });
 
+const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required().max(255),
+});
+
+const resetPasswordSchema = Joi.object({
+  access_token: Joi.string().required(),
+  password: Joi.string().min(8).max(128).required(),
+});
+
 // ─── Account Schemas ─────────────────────────────────────────────────────────
 
 const createAccountSchema = Joi.object({
@@ -95,6 +104,8 @@ module.exports = {
   registerSchema,
   loginSchema,
   magicLinkSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   createAccountSchema,
   updateAccountSchema,
   optimizeRouteSchema,

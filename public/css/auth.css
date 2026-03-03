@@ -78,6 +78,17 @@ body.auth-page {
   margin-top: 0.5rem;
 }
 
+.forgot-link {
+  text-align: right;
+  margin-top: 0.5rem;
+}
+.forgot-link a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+.forgot-link a:hover { color: var(--accent2); }
+
 .divider {
   display: flex;
   align-items: center;
