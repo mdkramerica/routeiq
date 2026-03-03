@@ -14,7 +14,6 @@
   // ══════════════════════════════════════════════════════════════════════════
   const tabs = document.querySelectorAll('.tab');
   const tabContents = document.querySelectorAll('.tab-content');
-  const fab = document.getElementById('fab-add');
 
   function switchTab(name) {
     const tab = document.querySelector(`.tab[data-tab="${name}"]`);
@@ -28,11 +27,8 @@
       tabContents.forEach((tc) => tc.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById(`tab-${target}`).classList.add('active');
-      fab.style.display = target === 'accounts' ? 'flex' : 'none';
       if (target === 'accounts') {
-        document.getElementById('accounts-list-view').style.display = 'block';
-        document.getElementById('account-detail').style.display = 'none';
-        document.getElementById('add-form').style.display = 'none';
+        showAccountsListView();
       }
     });
   });
@@ -91,9 +87,9 @@
         )
         .join('');
 
-      // Delegate click events (fixes XSS from inline onclick handlers)
       container.addEventListener('click', handleStopAction);
-    } catch {
+    } catch (err) {
+      console.error('loadToday error:', err);
       container.innerHTML =
         '<div class="empty-state"><p>Could not load today\'s route.</p></div>';
       document.getElementById('today-sub').textContent = '';
@@ -165,7 +161,36 @@
   // ACCOUNTS TAB
   // ══════════════════════════════════════════════════════════════════════════
   let allAccounts = [];
-  let accountsLoaded = null; // promise to prevent double-loading
+  let accountsLoaded = null;
+
+  function showAccountsListView() {
+    document.getElementById('accounts-list-view').style.display = 'block';
+    document.getElementById('account-detail').style.display = 'none';
+    document.getElementById('add-form').style.display = 'none';
+    document.getElementById('import-form-view').style.display = 'none';
+  }
+
+  function showAddForm() {
+    document.getElementById('add-form').style.display = 'block';
+    document.getElementById('import-form-view').style.display = 'none';
+    document.getElementById('accounts-list-view').style.display = 'none';
+    document.getElementById('account-detail').style.display = 'none';
+    document.getElementById('add-error').style.display = 'none';
+  }
+
+  function showImportForm() {
+    document.getElementById('import-form-view').style.display = 'block';
+    document.getElementById('add-form').style.display = 'none';
+    document.getElementById('accounts-list-view').style.display = 'none';
+    document.getElementById('account-detail').style.display = 'none';
+    document.getElementById('import-error').style.display = 'none';
+  }
+
+  // Wire up buttons
+  document.getElementById('btn-add-account').addEventListener('click', showAddForm);
+  document.getElementById('btn-import-csv').addEventListener('click', showImportForm);
+  document.getElementById('btn-cancel-add').addEventListener('click', showAccountsListView);
+  document.getElementById('btn-cancel-import').addEventListener('click', showAccountsListView);
 
   async function loadAccounts() {
     if (accountsLoaded) return accountsLoaded;
@@ -177,12 +202,19 @@
     try {
       const res = await apiFetch('/api/accounts');
       if (!res) return;
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error('loadAccounts API error:', res.status, errData);
+        throw new Error(errData.error || 'Failed to load accounts');
+      }
       const data = await res.json();
       allAccounts = data.accounts || data;
+      if (!Array.isArray(allAccounts)) allAccounts = [];
       renderAccountsList(allAccounts);
-    } catch {
+    } catch (err) {
+      console.error('loadAccounts error:', err);
       document.getElementById('accounts-list').innerHTML =
-        '<div class="empty-state"><p>Could not load accounts.</p></div>';
+        '<div class="empty-state"><p>Could not load accounts. Check your connection and refresh.</p></div>';
     }
   }
 
@@ -190,7 +222,7 @@
     const list = document.getElementById('accounts-list');
     if (!accounts.length) {
       list.innerHTML =
-        '<div class="empty-state" style="padding:2rem 1rem;"><p>No accounts yet. Tap + to add one.</p></div>';
+        '<div class="empty-state" style="padding:2rem 1rem;"><p>No accounts yet.</p><p style="font-size:0.8rem;">Use the buttons above to add an account or import from CSV.</p></div>';
       return;
     }
     list.innerHTML = accounts
@@ -206,7 +238,6 @@
       )
       .join('');
 
-    // Delegate clicks
     list.querySelectorAll('.account-item').forEach((item) => {
       item.addEventListener('click', () => showAccountDetail(item.dataset.id));
     });
@@ -228,7 +259,7 @@
     if (!account) return;
     document.getElementById('accounts-list-view').style.display = 'none';
     document.getElementById('add-form').style.display = 'none';
-    fab.style.display = 'none';
+    document.getElementById('import-form-view').style.display = 'none';
     const detail = document.getElementById('account-detail');
     detail.style.display = 'block';
 
@@ -267,52 +298,62 @@
     }
   }
 
-  document.getElementById('detail-back').addEventListener('click', () => {
-    document.getElementById('account-detail').style.display = 'none';
-    document.getElementById('accounts-list-view').style.display = 'block';
-    fab.style.display = 'flex';
-  });
+  document.getElementById('detail-back').addEventListener('click', showAccountsListView);
 
   // ─── Add Account Form ──────────────────────────────────────────────────
 
-  window.toggleAddForm = function () {
-    const form = document.getElementById('add-form');
-    if (form.style.display === 'block') {
-      form.style.display = 'none';
-      fab.style.display = 'flex';
-      document.getElementById('accounts-list-view').style.display = 'block';
-    } else {
-      form.style.display = 'block';
-      fab.style.display = 'none';
-      document.getElementById('accounts-list-view').style.display = 'none';
-      document.getElementById('account-detail').style.display = 'none';
-    }
-  };
-
   document.getElementById('add-account-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const errorEl = document.getElementById('add-error');
+    errorEl.style.display = 'none';
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Saving...';
+
     try {
+      const body = {
+        name: document.getElementById('add-name').value.trim(),
+        address: document.getElementById('add-address').value.trim(),
+        contact_name: document.getElementById('add-contact').value.trim(),
+        contact_email: document.getElementById('add-email').value.trim(),
+        priority: parseInt(document.getElementById('add-priority').value, 10),
+        notes: document.getElementById('add-notes').value.trim(),
+      };
+
+      if (!body.name) {
+        errorEl.textContent = 'Account name is required.';
+        errorEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Account';
+        return;
+      }
+
       const res = await apiFetch('/api/accounts', {
         method: 'POST',
-        body: JSON.stringify({
-          name: document.getElementById('add-name').value.trim(),
-          address: document.getElementById('add-address').value.trim(),
-          contact_name: document.getElementById('add-contact').value.trim(),
-          contact_email: document.getElementById('add-email').value.trim(),
-          priority: parseInt(document.getElementById('add-priority').value, 10),
-          notes: document.getElementById('add-notes').value.trim(),
-        }),
+        body: JSON.stringify(body),
       });
-      if (!res || !res.ok) throw new Error('Failed to add account');
+
+      if (!res) return;
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to add account');
+      }
+
       toast('Account added');
       document.getElementById('add-account-form').reset();
-      window.toggleAddForm();
-      // Reload accounts
+      showAccountsListView();
       accountsLoaded = null;
       await loadAccounts();
-    } catch {
-      toast('Error adding account');
+    } catch (err) {
+      console.error('Add account error:', err);
+      errorEl.textContent = err.message || 'Error adding account. Please try again.';
+      errorEl.style.display = 'block';
     }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Account';
   });
 
   // ─── CSV Import ────────────────────────────────────────────────────────
@@ -321,11 +362,16 @@
   if (importForm) {
     importForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const errorEl = document.getElementById('import-error');
+      errorEl.style.display = 'none';
+
       const fileInput = document.getElementById('import-file');
       if (!fileInput.files.length) {
-        toast('Select a CSV file');
+        errorEl.textContent = 'Please select a CSV file first.';
+        errorEl.style.display = 'block';
         return;
       }
+
       const formData = new FormData();
       formData.append('file', fileInput.files[0]);
 
@@ -339,17 +385,26 @@
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
-        if (!res.ok) throw new Error('Import failed');
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Import failed');
+        }
+
         const data = await res.json();
         toast(`Imported ${data.imported} accounts`);
         fileInput.value = '';
+        showAccountsListView();
         accountsLoaded = null;
         await loadAccounts();
-      } catch {
-        toast('Import failed');
+      } catch (err) {
+        console.error('CSV import error:', err);
+        errorEl.textContent = err.message || 'Import failed. Please check your CSV file.';
+        errorEl.style.display = 'block';
       }
+
       btn.disabled = false;
-      btn.textContent = 'Import CSV';
+      btn.textContent = 'Upload & Import';
     });
   }
 
@@ -362,6 +417,12 @@
   async function loadPlanAccounts() {
     const container = document.getElementById('plan-checklist');
     await loadAccounts();
+
+    if (!allAccounts.length) {
+      container.innerHTML =
+        '<div style="padding:1rem; color:var(--muted); font-size:0.85rem; text-align:center;">No accounts yet. Add accounts first from the Accounts tab.</div>';
+      return;
+    }
 
     const today = new Date();
     container.innerHTML = allAccounts
@@ -498,7 +559,6 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Redirecting...';
     try {
-      // Get selected plan from radio buttons, default to solo
       const planRadio = document.querySelector('input[name="upgrade-plan"]:checked');
       const plan = planRadio ? planRadio.value : 'solo';
 

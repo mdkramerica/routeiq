@@ -136,23 +136,6 @@ body { line-height: 1.5; }
 .account-item:not(:last-child) { border-bottom: 1px solid var(--border); }
 .account-name { font-weight: 600; font-size: 0.88rem; }
 .account-sub { font-size: 0.72rem; color: var(--muted); }
-.fab {
-  position: fixed;
-  bottom: 80px;
-  right: 1rem;
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
-  color: #fff;
-  font-size: 1.6rem;
-  border: none;
-  cursor: pointer;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(108,99,255,0.4);
-  z-index: 90;
-}
 .detail-view { display: none; }
 .detail-back {
   background: none;
