@@ -114,4 +114,44 @@ router.post(
   })
 );
 
+// GET /api/route/:date — fetch route plan for a specific date (YYYY-MM-DD)
+// Must be registered AFTER /today, /optimize, /plan to avoid param conflicts
+router.get(
+  '/:date',
+  auth,
+  asyncHandler(async (req, res) => {
+    const dateStr = req.params.date;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    const { data: plan } = await supabase
+      .from('route_plans')
+      .select('account_order, total_miles')
+      .eq('user_id', req.user.id)
+      .eq('plan_date', dateStr)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!plan || !plan.account_order?.length) {
+      return res.json({ stops: [], totalMiles: 0, planDate: dateStr });
+    }
+
+    const { data: accounts } = await supabase
+      .from('accounts')
+      .select('*')
+      .in('id', plan.account_order)
+      .eq('user_id', req.user.id);
+
+    const orderMap = {};
+    plan.account_order.forEach((id, i) => { orderMap[id] = i; });
+    const ordered = (accounts || []).sort(
+      (a, b) => (orderMap[a.id] ?? 99) - (orderMap[b.id] ?? 99)
+    );
+
+    res.json({ stops: ordered, totalMiles: plan.total_miles || 0, planDate: dateStr });
+  })
+);
+
 module.exports = router;

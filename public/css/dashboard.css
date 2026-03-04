@@ -68,6 +68,53 @@ body { line-height: 1.5; }
 .page-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem; }
 .page-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
 
+/* ── DATE NAVIGATION ── */
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.date-nav-center { text-align: center; flex: 1; min-width: 0; }
+.date-nav-center .page-title { margin-bottom: 0.1rem; }
+.date-nav-center .page-sub { margin-bottom: 0; }
+.date-nav-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.date-nav-btn:hover { border-color: var(--accent); }
+
+/* ── ROUTE MAP ── */
+.route-map {
+  display: none;
+  height: 280px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+}
+.route-marker { background: none !important; border: none !important; }
+.route-marker-inner {
+  background: var(--accent);
+  color: #fff;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.leaflet-pane { z-index: 1; }
+.leaflet-top, .leaflet-bottom { z-index: 2; }
+
 /* ── TODAY TAB ── */
 .stop-card { position: relative; }
 .stop-header {

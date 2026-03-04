@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Dashboard — RouteIQ</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/common.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
 </head>
@@ -26,8 +27,16 @@
 
   <!-- TODAY TAB -->
   <div class="tab-content active" id="tab-today">
-    <h1 class="page-title">Today's Route</h1>
-    <p class="page-sub" id="today-sub">Loading...</p>
+    <div class="date-nav">
+      <button class="date-nav-btn" id="date-prev" aria-label="Previous day">&larr;</button>
+      <div class="date-nav-center">
+        <h1 class="page-title" id="today-title">Today's Route</h1>
+        <p class="page-sub" id="today-sub">Loading...</p>
+      </div>
+      <button class="date-nav-btn" id="date-next" aria-label="Next day">&rarr;</button>
+    </div>
+    <button class="btn btn-outline btn-sm btn-full" id="date-today-btn" style="display:none; margin-bottom:0.75rem;">Back to Today</button>
+    <div id="today-map" class="route-map"></div>
     <div id="today-stops">
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
@@ -135,6 +144,7 @@
     </div>
     <div class="card" id="plan-checklist" style="padding:0.5rem 1rem;"></div>
     <div class="card" id="plan-result" style="display:none;"></div>
+    <div id="plan-map" class="route-map"></div>
     <div class="plan-actions">
       <button class="btn btn-accent" id="plan-optimize-btn">Optimize</button>
       <button class="btn btn-outline" id="plan-briefs-btn">Briefs</button>
@@ -212,6 +222,7 @@
   </button>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/api.js"></script>
 <script src="js/voice.js"></script>
 <script src="js/dashboard.js"></script>

@@ -27,8 +27,8 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'", config.supabase.url, 'https://api.openai.com', 'https://maps.googleapis.com'],
         fontSrc: ["'self'"],

@@ -40,31 +40,65 @@
   );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // TODAY TAB
+  // TODAY TAB — date navigation + route loading
   // ══════════════════════════════════════════════════════════════════════════
   let todayStops = [];
+  let selectedDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local time
 
-  async function loadToday() {
+  function getTodayStr() { return new Date().toLocaleDateString('en-CA'); }
+
+  function formatDateTitle(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    const today = getTodayStr();
+    const tmrw = new Date(); tmrw.setDate(tmrw.getDate() + 1);
+    if (dateStr === today) return "Today's Route";
+    if (dateStr === tmrw.toLocaleDateString('en-CA')) return "Tomorrow's Route";
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function updateDateDisplay() {
+    document.getElementById('today-title').textContent = formatDateTitle(selectedDate);
+    document.getElementById('date-today-btn').style.display = selectedDate === getTodayStr() ? 'none' : 'block';
+  }
+
+  function changeDate(delta) {
+    const d = new Date(selectedDate + 'T12:00:00');
+    d.setDate(d.getDate() + delta);
+    selectedDate = d.toLocaleDateString('en-CA');
+    updateDateDisplay();
+    loadRouteForDate(selectedDate);
+  }
+
+  document.getElementById('date-prev').addEventListener('click', () => changeDate(-1));
+  document.getElementById('date-next').addEventListener('click', () => changeDate(1));
+  document.getElementById('date-today-btn').addEventListener('click', () => {
+    selectedDate = getTodayStr();
+    updateDateDisplay();
+    loadRouteForDate(selectedDate);
+  });
+
+  async function loadRouteForDate(dateStr) {
     const container = document.getElementById('today-stops');
     container.innerHTML =
-      '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+      '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
 
     try {
-      const res = await apiFetch('/api/route/today');
+      const res = await apiFetch(`/api/route/${dateStr}`);
       if (!res) return;
       const data = await res.json();
       todayStops = data.stops || [];
 
       if (!todayStops.length) {
         container.innerHTML =
-          '<div class="empty-state"><p>No route planned for today.</p><button class="btn btn-accent" id="plan-route-cta">Plan a Route</button></div>';
+          '<div class="empty-state"><p>No route planned for this date.</p><button class="btn btn-accent" id="plan-route-cta">Plan a Route</button></div>';
         document.getElementById('plan-route-cta').addEventListener('click', () => switchTab('plan'));
         document.getElementById('start-route-btn').style.display = 'none';
         document.getElementById('today-sub').textContent = 'No stops scheduled';
+        document.getElementById('today-map').style.display = 'none';
         return;
       }
 
-      document.getElementById('today-sub').textContent = `${todayStops.length} stops`;
+      document.getElementById('today-sub').textContent = `${todayStops.length} stops` + (data.totalMiles ? ` · ${data.totalMiles} mi` : '');
       document.getElementById('start-route-btn').style.display = 'block';
       container.innerHTML = todayStops
         .map(
@@ -88,13 +122,18 @@
         .join('');
 
       container.addEventListener('click', handleStopAction);
+      renderRouteMap('today-map', todayStops);
     } catch (err) {
-      console.error('loadToday error:', err);
+      console.error('loadRouteForDate error:', err);
       container.innerHTML =
-        '<div class="empty-state"><p>Could not load today\'s route.</p></div>';
+        '<div class="empty-state"><p>Could not load route.</p></div>';
       document.getElementById('today-sub').textContent = '';
+      document.getElementById('today-map').style.display = 'none';
     }
   }
+
+  // Keep loadToday as alias for plan tab's "View Today's Route"
+  async function loadToday() { return loadRouteForDate(selectedDate); }
 
   async function handleStopAction(e) {
     const btn = e.target.closest('[data-action]');
@@ -156,6 +195,62 @@
     if (mid) url += `&waypoints=${mid}`;
     window.open(url, '_blank');
   });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ROUTE MAP (Leaflet)
+  // ══════════════════════════════════════════════════════════════════════════
+  const mapInstances = {};
+
+  function renderRouteMap(containerId, stops) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const geoStops = stops.filter((s) => s.lat && s.lng);
+    if (!geoStops.length) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+
+    if (mapInstances[containerId]) {
+      mapInstances[containerId].remove();
+      mapInstances[containerId] = null;
+    }
+
+    const map = L.map(containerId, { zoomControl: true, attributionControl: false });
+    mapInstances[containerId] = map;
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+
+    function numIcon(n) {
+      return L.divIcon({
+        className: 'route-marker',
+        html: `<div class="route-marker-inner">${n}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+    }
+
+    const markers = geoStops.map((s, i) => {
+      const m = L.marker([s.lat, s.lng], { icon: numIcon(i + 1) }).addTo(map);
+      m.bindPopup(`<strong>${i + 1}. ${esc(s.name)}</strong>`);
+      return m;
+    });
+
+    L.polyline(geoStops.map((s) => [s.lat, s.lng]), {
+      color: '#6c63ff',
+      weight: 3,
+      opacity: 0.8,
+      dashArray: '8, 6',
+    }).addTo(map);
+
+    map.fitBounds(L.featureGroup(markers).getBounds().pad(0.15));
+    map.scrollWheelZoom.disable();
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // ACCOUNTS TAB
@@ -502,6 +597,7 @@
       result.style.display = 'none';
       checklist.style.display = '';
       filters.style.display = '';
+      document.getElementById('plan-map').style.display = 'none';
     });
   }
 
@@ -527,6 +623,7 @@
       checklist.style.display = 'none';
       filters.style.display = 'none';
       result.style.display = 'block';
+      document.getElementById('plan-map').style.display = 'none';
       showPlanBackBtn(result, checklist, filters);
 
       document.getElementById('plan-geocode-btn').addEventListener('click', async () => {
@@ -581,8 +678,13 @@
     result.style.display = 'block';
     showPlanBackBtn(result, checklist, filters);
 
+    // Render route map
+    setTimeout(() => renderRouteMap('plan-map', route), 50);
+
     document.getElementById('plan-view-today').addEventListener('click', async () => {
-      await loadToday();
+      selectedDate = planDate.value;
+      updateDateDisplay();
+      await loadRouteForDate(selectedDate);
       switchTab('today');
     });
   }
@@ -756,7 +858,8 @@
   // ══════════════════════════════════════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════════════════════════════════════
-  loadToday();
+  updateDateDisplay();
+  loadRouteForDate(selectedDate);
   loadAccounts().then(() => loadPlanAccounts());
   loadProfile();
 })();
