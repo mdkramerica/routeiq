@@ -1,4 +1,4 @@
-# RouteIQ Codebase Review & Refactoring Plan
+# TerritoryPilot Codebase Review & Refactoring Plan
 
 **Date:** 2026-03-03
 **Scope:** Full codebase audit — security, efficiency, architecture, and quality
@@ -30,7 +30,7 @@
 
 ### File Layout
 ```
-routeiq/
+territorypilot/
 ├── index.html          (823 lines — landing page)
 ├── signup.html         (253 lines — registration)
 ├── login.html          (302 lines — login)
@@ -422,7 +422,7 @@ Every query selects all columns even when only a few are needed (e.g., the brief
 
 ### 7.1 — Proposed Project Structure
 ```
-routeiq/
+territorypilot/
 ├── public/                     # Static files (ONLY this is served)
 │   ├── index.html
 │   ├── signup.html

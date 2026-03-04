@@ -1,4 +1,4 @@
--- RouteIQ Supabase Schema
+-- TerritoryPilot Supabase Schema
 -- Run in Supabase SQL editor
 
 -- ═══════════════════════════════════════════════════════════════════════════════

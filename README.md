@@ -1,4 +1,4 @@
-# RouteIQ — AI Daily Briefing for Field Sales Reps
+# TerritoryPilot — AI Daily Briefing for Field Sales Reps
 
 > *"Walk in knowing everything. Never wing a sales call again."*
 
@@ -19,7 +19,7 @@ Current tools suck for solo reps:
 
 ## 💡 The Solution
 
-RouteIQ is a mobile-first web app that:
+TerritoryPilot is a mobile-first web app that:
 
 1. **Imports your accounts** (CSV, Google Sheets, or manual)
 2. **Plans your day** — optimizes visit order by geography (TSP algorithm)

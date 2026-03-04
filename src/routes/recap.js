@@ -69,7 +69,7 @@ router.post(
 
     const emailHtml = `
 <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; color: #e8e8f0; padding: 2rem; border-radius: 12px;">
-  <h2 style="color: #a78bfa; margin-bottom: 0.5rem;">RouteIQ Evening Recap</h2>
+  <h2 style="color: #a78bfa; margin-bottom: 0.5rem;">TerritoryPilot Evening Recap</h2>
   <p style="color: #7a7a9a; font-size: 0.9rem;">${dateStr}</p>
 
   <h3 style="margin-top: 2rem; color: #e8e8f0;">Today's Calls (${todayLogs?.length || 0})</h3>
@@ -86,13 +86,13 @@ router.post(
     <a href="${config.appUrl}/dashboard.html" style="background: #6c63ff; color: white; padding: 0.75rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700;">Plan Tomorrow's Route</a>
   </div>
 
-  <p style="margin-top: 2rem; color: #7a7a9a; font-size: 0.78rem; text-align: center;">RouteIQ</p>
+  <p style="margin-top: 2rem; color: #7a7a9a; font-size: 0.78rem; text-align: center;">TerritoryPilot</p>
 </div>`;
 
     await resend.emails.send({
-      from: 'RouteIQ <recap@routeiq.app>',
+      from: 'TerritoryPilot <recap@territorypilot.app>',
       to: user.email,
-      subject: `RouteIQ Recap — ${todayLogs?.length || 0} calls, ${overdueAccounts.length} priorities for tomorrow`,
+      subject: `TerritoryPilot Recap — ${todayLogs?.length || 0} calls, ${overdueAccounts.length} priorities for tomorrow`,
       html: emailHtml,
     });
 

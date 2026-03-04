@@ -1,5 +1,5 @@
 {
-  "name": "routeiq",
+  "name": "territorypilot",
   "version": "0.2.0",
   "description": "AI-powered daily route optimization and account briefings for field sales reps",
   "main": "src/server.js",
