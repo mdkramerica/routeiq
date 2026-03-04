@@ -475,6 +475,49 @@
     });
   });
 
+  function showPlanResult(data, skippedCount) {
+    const checklist = document.getElementById('plan-checklist');
+    const result = document.getElementById('plan-result');
+    const filters = document.querySelector('.plan-filters');
+    const route = data.route || [];
+
+    let msg = `Route optimized: ${data.stops} stops, ${data.totalMiles} mi`;
+    if (skippedCount > 0) msg += ` (${skippedCount} skipped — no address)`;
+    toast(msg);
+
+    result.innerHTML = `
+      <div class="plan-result-header">
+        <strong>Optimized Route — ${data.stops} stops, ${data.totalMiles} mi</strong>
+        <button class="plan-filter-btn" id="plan-back-btn">Edit selection</button>
+      </div>
+      ${route.map((s, i) => `
+        <div class="plan-stop">
+          <div class="stop-num">${i + 1}</div>
+          <div class="plan-stop-info">
+            <div class="stop-name">${esc(s.name)}</div>
+            <div class="stop-meta">${s.distFromPrev} mi from ${i === 0 ? 'start' : 'previous'}</div>
+          </div>
+        </div>
+      `).join('')}
+      <button class="btn btn-accent" id="plan-view-today" style="width:100%;margin-top:0.75rem;">View Today's Route &rarr;</button>
+    `;
+
+    checklist.style.display = 'none';
+    filters.style.display = 'none';
+    result.style.display = 'block';
+
+    document.getElementById('plan-back-btn').addEventListener('click', () => {
+      result.style.display = 'none';
+      checklist.style.display = '';
+      filters.style.display = '';
+    });
+
+    document.getElementById('plan-view-today').addEventListener('click', async () => {
+      await loadToday();
+      switchTab('today');
+    });
+  }
+
   document.getElementById('plan-optimize-btn').addEventListener('click', async () => {
     const ids = getSelectedAccountIds();
     if (!ids.length) {
@@ -509,7 +552,8 @@
       });
       if (!res) return;
       const data = await res.json();
-      toast(`Route optimized: ${data.stops} stops, ${data.totalMiles} mi`);
+      const skipped = ids.length - (data.stops || 0);
+      showPlanResult(data, skipped);
     } catch {
       toast('Optimization failed');
     }

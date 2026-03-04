@@ -260,6 +260,27 @@ body { line-height: 1.5; }
 }
 .plan-actions .btn { flex: 1; min-width: 0; }
 
+/* ── PLAN RESULT ── */
+#plan-result { padding: 1rem; }
+.plan-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+.plan-stop {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.plan-stop:last-of-type { border-bottom: none; }
+.plan-stop-info { flex: 1; min-width: 0; }
+.plan-stop-info .stop-name { font-weight: 700; font-size: 0.88rem; }
+.plan-stop-info .stop-meta { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+
 /* ── PROFILE TAB ── */
 .profile-card { text-align: center; padding: 1.5rem 1rem; }
 .profile-avatar {
