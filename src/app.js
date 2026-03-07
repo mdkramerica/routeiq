@@ -40,7 +40,12 @@ app.use(
 
 app.use(
   cors({
-    origin: config.appUrl,
+    origin: [
+      config.appUrl,
+      'https://territorypilot.com',
+      'https://www.territorypilot.com',
+      'https://routeiq-app-production.up.railway.app', // legacy, keep for safety
+    ],
     credentials: true,
   })
 );
